@@ -16,102 +16,25 @@ public class main
 	{
 		Graph G = new Graphm();
 		CityNode[] arrCities = new CityNode[25];
-		arrCities = createCityArr(arrCities);
 		BufferedReader f = new BufferedReader(new InputStreamReader(new FileInputStream("src/LAGraph.gph")));
-		int cityStart;
+		int[] startEnd;
 		
-	    createGraph(f, G, arrCities);
-	    //graphTraverse(G); //DFS Implementation. BFS might be better(?)
+		arrCities = createCityArr(arrCities);
 	    
-	    cityStart = cityGrab(arrCities);
+	    startEnd = cityGrab(arrCities);
 	    
-	    if (cityStart != -1)
-	    	BFS(G, cityStart);
+	    if (startEnd[0] == -1 || startEnd[1] == -1)
+	    	System.out.println("City not found or starting city is the same as end city.");
 	    else
-	    	System.out.println("City not found.");
+	    {
+	    	createGraph(f, G, arrCities, startEnd);
+	    	graphTraverse(G, arrCities);
+	    }
 	    
-	    System.out.printf("Total sum of weight = %-5.2fkm", total_weight);
+	    System.out.printf("\nTotal sum of weight = %-5.2fkm", total_weight);
 	}
 	
-	static Graph createGraph(BufferedReader file, Graph G, CityNode[] arrCities) throws IOException 
-	{
-		String line = null;
-		StringTokenizer token;
-		boolean undirected = false;
-		int i, v1, v2;
-		double weight;
-		
-		line = file.readLine();
-		while(line.charAt(0) == '#')
-			line = file.readLine();
-		token = new StringTokenizer(line);
-		int n = Integer.parseInt(token.nextToken());
-		G.Init(n);
-		for (i=0; i<n; i++)
-			G.setMark(i, UNVISITED);
-		line = file.readLine();
-		if (line.charAt(0) == 'U')
-			undirected = true;
-		else if (line.charAt(0) == 'D')
-			undirected = false;
-		//else assert false : "Bad graph type: " + line;
-		
-		// Read in edges
-		while((line = file.readLine()) != null) 
-		{
-			token = new StringTokenizer(line);
-			v1 = Integer.parseInt(token.nextToken());
-			v2 = Integer.parseInt(token.nextToken());
-			if (token.hasMoreTokens())
-			{
-				weight = CityNode.getDistance(arrCities[v1], arrCities[v2]);
-				System.out.printf("The distance from %-15s and %-15s is: %2f\n", arrCities[v1].name, arrCities[v2].name, weight);
-			}
-			else // No weight given -- set at 1
-				weight = 1;
-			G.setEdge(v1, v2, weight);
-			if (undirected) // Put in edge in other direction
-				G.setEdge(v2, v1, weight);
-		}
-		return G;
-	}
-	
-	public static int cityGrab(CityNode[] arrCities)
-	{
-		Scanner userIn = new Scanner(System.in);
-		String startCity;
-		
-		System.out.println("Please enter the name of the starting city:");
-		startCity = userIn.nextLine();
-		
-		for (int i = 0; i < arrCities.length; i++)
-		{
-			if (startCity.equalsIgnoreCase(arrCities[i].name))
-				return i;
-		}
-		return -1;
-	}
-	
-	static void BFS(Graph G, int start) 
-	{
-		Queue<Integer> Q = new AQueue<Integer>(G.n());
-		Q.enqueue(start);
-		G.setMark(start, VISITED);
-		while (Q.length() > 0) 
-		{    // Process each vertex on Q
-			int v = Q.dequeue();
-			for (int w = G.first(v); w < G.n(); w = G.next(v, w))
-				if (G.getMark(w) == UNVISITED) 
-				{ // Put neighbors on Q
-					total_weight += G.weight(v, w);
-					System.out.printf("Visiting node %-2d from node %-2d with edge weight %-5.2f\n", w, v, G.weight(v, w));
-					G.setMark(w, VISITED);
-					Q.enqueue(w);
-				}
-		}
-	}
-	
-	public static CityNode[] createCityArr(CityNode[] arr) 
+	static CityNode[] createCityArr(CityNode[] arr) 
 	{
 		int i = 0;
 		arr = new CityNode[25];
@@ -130,9 +53,10 @@ public class main
 				double lon = scan.nextDouble();
 				int pop = scan.nextInt();
 				
-				arr[i] = new CityNode(name, lat, lon);
+				arr[i] = new CityNode(name, lat, lon, pop);
 				i++;
 			}
+			scan.close();
 		}
 		
 		catch (FileNotFoundException e) 
@@ -141,34 +65,118 @@ public class main
 		return arr;
 	}
 	
-	//for DFS Implementation. BFS might be better(?)
-	
-	/*
-	static void graphTraverse(Graph G) 
+	static int[] cityGrab(CityNode[] arrCities)
 	{
+		Scanner userIn = new Scanner(System.in);
+		String startCity, endCity;
+		int[] startEnd = new int[]{-1, -1};
+		
+		System.out.println("Please enter the name of the starting city:");
+		startCity = userIn.nextLine();
+		
+		System.out.println("Please enter the name of the ending city:");
+		endCity = userIn.nextLine();
+		
+		for (int i = 0; i < arrCities.length; i++)
+		{
+			if (startCity.equalsIgnoreCase(arrCities[i].name))
+				startEnd[0] = i;
+			else if (endCity.equalsIgnoreCase(arrCities[i].name))
+				startEnd[1] = i;
+		}
+		userIn.close();
+		return startEnd;
+	}
+	
+	static Graph createGraph(BufferedReader file, Graph G, CityNode[] arrCities, int[] startEnd) throws IOException 
+	{
+		String line = null;
+		StringTokenizer token;
+		boolean undirected = false;
+		int i, v1, v2;
+		double weight;
+		
+		line = file.readLine();
+		while(line.charAt(0) == '#')
+			line = file.readLine();
+		token = new StringTokenizer(line);
+		
+		int n = Integer.parseInt(token.nextToken());
+		arrCities = arrayAdjust(arrCities, startEnd, n);
+		G.Init(n);
+		
+		for (i=0; i<n; i++)
+			G.setMark(i, UNVISITED);
+		
+		line = file.readLine();
+		
+		if (line.charAt(0) == 'U')
+			undirected = true;
+		else if (line.charAt(0) == 'D')
+			undirected = false;
+		
+		//else assert false : "Bad graph type: " + line;
+		
+		// Read in edges
+		System.out.println("\n=-DISTANCE PRINTOUTS-=\n");
+		
+		while((line = file.readLine()) != null) 
+		{
+			token = new StringTokenizer(line);
+			v1 = Integer.parseInt(token.nextToken());
+			v2 = Integer.parseInt(token.nextToken());
+			if (token.hasMoreTokens())
+			{
+				weight = CityNode.getDistance(arrCities[v1], arrCities[v2]);
+				System.out.printf("The distance from %-18s and %-18s is: %2fkm\n", 
+						arrCities[v1].name, arrCities[v2].name, weight);
+			}
+			else // No weight given -- set at 1
+				weight = 1;
+			G.setEdge(v1, v2, weight);
+			if (undirected) // Put in edge in other direction
+				G.setEdge(v2, v1, weight);
+		}
+		return G;
+	}
+	
+	static CityNode[] arrayAdjust(CityNode[] arr, int[] startEnd, int n)
+	{
+		CityNode temp0 = new CityNode(arr[startEnd[0]]);
+		CityNode temp1 = new CityNode(arr[startEnd[1]]);
+		
+		arr[startEnd[0]] = arr[0];
+		arr[0] = temp0;
+		
+		arr[startEnd[1]] = arr[n-1];
+		arr[n-1] = temp1;
+		
+		return arr;
+	}
+	
+	static void graphTraverse(Graph G, CityNode[] arr) 
+	{
+		System.out.println("\n=-BEGIN TRAVELLING-=\n");
 		int v;
 		for (v = 0; v < G.n(); v++)
 			G.setMark(v, UNVISITED); // Initialize 
 		for (v = 0; v <G.n(); v++)
 			if (G.getMark(v) == UNVISITED)
-				doTraverse(G, v);
+				doTraverse(G, v, arr);
 	}
 
-	static void DFS(Graph G, int v) 
+	static void doTraverse(Graph G, int v, CityNode[] arr) 
+	{DFS(G, v, arr);}
+	
+	static void DFS(Graph G, int v, CityNode[] arr) 
 	{
 		G.setMark(v, VISITED);
 		for (int w = G.first(v); w < G.n() ; w = G.next(v, w))
 			if (G.getMark(w) == UNVISITED)
 			{
-				DFS(G, w);
+				System.out.printf("Going from %-18s to %-18s was %-2.2fkm\n", arr[v].name, arr[w].name, G.weight(v, w));
+				DFS(G, w, arr);
 				total_weight += G.weight(v, w);
-				System.out.printf("Visiting node %-2d from node %-2d with edge weight %f\n", w, v, G.weight(v, w));
 		    }
 	}
-	
-	static void doTraverse(Graph G, int v) 
-	{
-		DFS(G, v);
-	}
-	*/
 }

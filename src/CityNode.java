@@ -3,12 +3,22 @@ public class CityNode
 {
 	public String name;
 	public double lat, lon;
+	public int pop;
 	
-	CityNode(String name, double lat, double lon)
+	CityNode(String name, double lat, double lon, int pop) //regular constructor
 	{
 		this.name = name;
 		this.lat = lat;
 		this.lon = lon;
+		this.pop = pop;
+	}
+	
+	CityNode(CityNode og) //deep copy constructor
+	{
+		this.name = og.name;
+		this.lat = og.lat;
+		this.lon = og.lon;
+		this.pop = og.pop;
 	}
 
 	public static double getDistance(CityNode city1, CityNode city2)
