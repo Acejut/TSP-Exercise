@@ -51,4 +51,13 @@ public interface Graph {         // Graph class ADT
       @param v The vertex
       @return The value of the mark */
   public int getMark(int v);
+  
+  /** Get the index of the city node whose weight is the least for that city
+   * @param i First vertex
+   * @return The index of the least weighted city node*/
+  public int getLeast(int i);
+  
+  /** Get the index of the last node
+   * @return The index of the last node*/
+  public int getLastNode();
 }

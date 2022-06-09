@@ -64,4 +64,25 @@ class Graphm implements Graph {
   /** Set/Get the mark value for a vertex */
   public void setMark(int v, int val) { Mark[v] = val; }
   public int getMark(int v) { return Mark[v]; }
+  
+  /** @return the index of the city node whose weight is the least for that city */
+  public int getLeast(int i)
+  {
+	  double min = Double.MAX_VALUE;
+	  int index = 0;
+	  for (int j = 0; j < Mark.length; j++)
+	  {
+		  if ((matrix[i][j] < min) && (matrix[i][j] != 0))
+		  {
+			  min = matrix[i][j];
+			  index = j;
+		  }
+	  }
+	  return index;
+  }
+  
+  /** @return last node of the graph */
+  public int getLastNode()
+  {return (this.n()-1);}
+  
 }

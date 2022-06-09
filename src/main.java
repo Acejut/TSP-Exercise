@@ -3,13 +3,14 @@ import java.util.*;
 
 //Justin Ruiz
 
-/* TODO: Modify BFS function to not return trivial solution - create path based on edge weight */
+/* TODO: Write a function to create a graph dynamically rather than have one read in */
 
 public class main 
 {
 	
 	static final int UNVISITED = 0;
 	static final int VISITED = 1;
+	static final int LAST_VISIT = 2;
 	static double total_weight = 0;
 
 	public static void main(String[] args) throws IOException
@@ -140,6 +141,13 @@ public class main
 		return G;
 	}
 	
+	/*
+	 * arrayAdjust swaps the first node (alphabetical) with the user-selected starting city node.
+	 * It also swaps the last node (alphabetical) with the user-selected ending city node.
+	 * This is done so that when the DFS recursive method is called (which visits nodes in order of array index)
+	 * it will automatically visit the starting city first, and ending city last.
+	 */
+	
 	static CityNode[] arrayAdjust(CityNode[] arr, int[] startEnd, int n)
 	{
 		CityNode temp0 = new CityNode(arr[startEnd[0]]);
@@ -160,6 +168,9 @@ public class main
 		int v;
 		for (v = 0; v < G.n(); v++)
 			G.setMark(v, UNVISITED); // Initialize 
+		
+		G.setMark(G.getLastNode(), VISITED); //Last city must be marked as visited to avoid being visited prematurely.
+		
 		for (v = 0; v <G.n(); v++)
 			if (G.getMark(v) == UNVISITED)
 				doTraverse(G, v, arr);
@@ -168,15 +179,54 @@ public class main
 	static void doTraverse(Graph G, int v, CityNode[] arr) 
 	{DFS(G, v, arr);}
 	
+	/*
+	 * Improved loop first uses the G.getLeast Graphm function to visit the node for that city with the shortest distance.
+	 * If that node has already been visited by a different city, just go to the next city.
+	 * For the very last city, a special identifier was made (LAST_VISIT) that is checked so that the last city...
+	 * is not visited prematurely.
+	 */
+	
 	static void DFS(Graph G, int v, CityNode[] arr) 
 	{
 		G.setMark(v, VISITED);
+		int index = G.getLeast(v);
+		int x = G.first(v);
+		
+		
+		while (x < G.n())
+		{
+			if (G.getMark(index) == UNVISITED)
+			{
+				System.out.printf("Going from %-18s to %-18s was %-2.2fkm\n", arr[v].name, arr[index].name, G.weight(v, index));
+				DFS(G, index, arr);
+				total_weight += G.weight(v, index);
+			}
+			else if (G.getMark(x) == UNVISITED)
+			{
+				System.out.printf("Going from %-18s to %-18s was %-2.2fkm\n", arr[v].name, arr[x].name, G.weight(v, x));
+				DFS(G, x, arr);
+				total_weight += G.weight(v, x);
+			}
+			else if (x == G.getLastNode() && G.getMark(G.getLastNode()) != LAST_VISIT)
+			{
+				G.setMark(G.getLastNode(), LAST_VISIT);
+				System.out.printf("Going from %-18s to %-18s was %-2.2fkm\n", arr[v].name, arr[x].name, G.weight(v, x));
+				total_weight += G.weight(v, x);
+			}
+			
+			x = G.next(v, x);
+		}
+		
+		
+		/* ALPHABETICAL ORDER TRAVERSAL
+
 		for (int w = G.first(v); w < G.n() ; w = G.next(v, w))
 			if (G.getMark(w) == UNVISITED)
 			{
-				System.out.printf("Going from %-18s to %-18s was %-2.2fkm\n", arr[v].name, arr[w].name, G.weight(v, w));
-				DFS(G, w, arr);
-				total_weight += G.weight(v, w);
+					System.out.printf("Going from %-18s to %-18s was %-2.2fkm\n", arr[v].name, arr[w].name, G.weight(v, w));
+					DFS(G, w, arr);
+					total_weight += G.weight(v, w);
 		    }
+		*/
 	}
 }
