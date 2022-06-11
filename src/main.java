@@ -3,20 +3,19 @@ import java.util.*;
 
 //Justin Ruiz
 
-/* TODO: Write a function to create a graph dynamically rather than have one read in */
+/* TODO: Implement permutation algorithm */
 
 public class main 
 {
-	
+	static double total_weight = 0;
 	static final int UNVISITED = 0;
 	static final int VISITED = 1;
 	static final int LAST_VISIT = 2;
-	static double total_weight = 0;
-
+	
 	public static void main(String[] args) throws IOException
 	{
 		Graph G = new Graphm();
-		CityNode[] arrCities = new CityNode[25];
+		CityNode[] arrCities = null;
 		BufferedReader f = new BufferedReader(new InputStreamReader(new FileInputStream("src/LAGraph.gph")));
 		int[] startEnd;
 		
@@ -24,12 +23,24 @@ public class main
 	    
 	    startEnd = cityGrab(arrCities);
 	    
+	    System.out.println(arrCities.length);
+	    
 	    if (startEnd[0] == -1 || startEnd[1] == -1)
 	    	System.out.println("City not found or starting city is the same as end city.");
 	    else
 	    {
-	    	createGraph(f, G, arrCities, startEnd);
+	    	long startTime, endTime;
+	    	double totalTime;
+	    	
+	    	startTime = System.nanoTime();
+	    	
+	    	//createGraph(f, G, arrCities, startEnd);
+	    	G = createGraph(G, arrCities, startEnd);
 	    	graphTraverse(G, arrCities);
+	    	
+	    	endTime = System.nanoTime();
+	    	totalTime = (double) (endTime - startTime) / 1000000;
+	    	System.out.println(totalTime + "ms");
 	    }
 	    
 	    System.out.printf("\nTotal sum of weight = %-5.2fkm", total_weight);
@@ -38,11 +49,23 @@ public class main
 	static CityNode[] createCityArr(CityNode[] arr) 
 	{
 		int i = 0;
-		arr = new CityNode[25];
 		File towns = new File("src/LATowns.txt");
 		
 		try 
 		{
+			Scanner firstScan = new Scanner(towns);
+			
+			firstScan.nextLine();
+			while (firstScan.hasNextLine())
+			{
+				firstScan.nextLine();
+				i++;
+			}
+			firstScan.close();
+			
+			arr = new CityNode[i];
+			i = 0;
+			
 			Scanner scan = new Scanner(towns);
 			
 			scan.nextLine();
@@ -59,9 +82,8 @@ public class main
 			}
 			scan.close();
 		}
-		
-		catch (FileNotFoundException e) 
-			{System.out.println("LATowns.txt FILE NOT FOUND.");}
+		catch (FileNotFoundException p)
+		{System.out.println("LATowns.txt FILE NOT FOUND.");}
 		
 		return arr;
 	}
@@ -89,6 +111,29 @@ public class main
 		return startEnd;
 	}
 	
+	
+	static public Graph createGraph(Graph G, CityNode[] arrCities, int[] startEnd)
+    {
+		int numNodes = arrCities.length;
+		arrCities = arrayAdjust(arrCities, startEnd, numNodes);
+		
+		G.Init(numNodes);
+		
+		for (int i = 0; i < numNodes; i++)
+			G.setMark(i, UNVISITED);
+		
+		for(int i = 0; i < numNodes; i++)
+			for(int j = 0 ; j < numNodes; j++)
+			{
+				double weight = CityNode.getDistance(arrCities[i], arrCities[j]);
+				G.setEdge(i, j, weight);
+				System.out.printf("The distance from %-18s and %-18s is: %2fkm\n", 
+						arrCities[i].name, arrCities[j].name, weight);
+			}
+		return G;
+    }
+	
+	/*
 	static Graph createGraph(BufferedReader file, Graph G, CityNode[] arrCities, int[] startEnd) throws IOException 
 	{
 		String line = null;
@@ -103,6 +148,7 @@ public class main
 		token = new StringTokenizer(line);
 		
 		int n = Integer.parseInt(token.nextToken());
+		//int n = arrCities.length;
 		arrCities = arrayAdjust(arrCities, startEnd, n);
 		G.Init(n);
 		
@@ -140,6 +186,7 @@ public class main
 		}
 		return G;
 	}
+	*/
 	
 	/*
 	 * arrayAdjust swaps the first node (alphabetical) with the user-selected starting city node.
@@ -181,7 +228,7 @@ public class main
 	
 	/*
 	 * Improved loop first uses the G.getLeast Graphm function to visit the node for that city with the shortest distance.
-	 * If that node has already been visited by a different city, just go to the next city.
+	 * If that node has already been visited by a different city, find the next least weighted city.
 	 * For the very last city, a special identifier was made (LAST_VISIT) that is checked so that the last city...
 	 * is not visited prematurely.
 	 */
@@ -192,6 +239,8 @@ public class main
 		int index = G.getLeast(v);
 		int x = G.first(v);
 		
+		
+		//GREEDY TRAVERSAL ALGORITHM
 		
 		while (x < G.n())
 		{
@@ -218,7 +267,7 @@ public class main
 		}
 		
 		
-		/* ALPHABETICAL ORDER TRAVERSAL
+		/* ALPHABETICAL ORDER TRAVERSAL (RANDOM)
 
 		for (int w = G.first(v); w < G.n() ; w = G.next(v, w))
 			if (G.getMark(w) == UNVISITED)

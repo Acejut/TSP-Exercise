@@ -52,7 +52,7 @@ public interface Graph {         // Graph class ADT
       @return The value of the mark */
   public int getMark(int v);
   
-  /** Get the index of the city node whose weight is the least for that city
+  /** Get the index of the city node whose weight is the least for that city and unvisited
    * @param i First vertex
    * @return The index of the least weighted city node*/
   public int getLeast(int i);
