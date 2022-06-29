@@ -35,6 +35,7 @@ public class main
 	    	startTime = System.nanoTime();
 	    	
 	    	//createGraph(f, G, arrCities, startEnd);
+	    	arrCities = arrayAdjust(arrCities, startEnd, arrCities.length);
 	    	G = createGraph(G, arrCities, startEnd);
 	    	graphTraverse(G, arrCities);
 	    	
@@ -115,7 +116,6 @@ public class main
 	static public Graph createGraph(Graph G, CityNode[] arrCities, int[] startEnd)
     {
 		int numNodes = arrCities.length;
-		arrCities = arrayAdjust(arrCities, startEnd, numNodes);
 		
 		G.Init(numNodes);
 		
@@ -127,8 +127,8 @@ public class main
 			{
 				double weight = CityNode.getDistance(arrCities[i], arrCities[j]);
 				G.setEdge(i, j, weight);
-				System.out.printf("The distance from %-18s and %-18s is: %2fkm\n", 
-						arrCities[i].name, arrCities[j].name, weight);
+				//System.out.printf("The distance from %-18s and %-18s is: %2fkm\n", 
+						//arrCities[i].name, arrCities[j].name, weight);
 			}
 		return G;
     }
@@ -197,16 +197,21 @@ public class main
 	
 	static CityNode[] arrayAdjust(CityNode[] arr, int[] startEnd, int n)
 	{
+		CityNode[] newArr = Arrays.copyOf(arr, arr.length);
 		CityNode temp0 = new CityNode(arr[startEnd[0]]);
 		CityNode temp1 = new CityNode(arr[startEnd[1]]);
 		
-		arr[startEnd[0]] = arr[0];
+		newArr[0] = temp0;
+		newArr[startEnd[0]] = newArr[n-1];
+		newArr[n-1] = temp1;
+		
+		/*arr[startEnd[0]] = arr[0];
 		arr[0] = temp0;
 		
 		arr[startEnd[1]] = arr[n-1];
-		arr[n-1] = temp1;
+		arr[n-1] = temp1;*/
 		
-		return arr;
+		return newArr;
 	}
 	
 	static void graphTraverse(Graph G, CityNode[] arr) 
