@@ -1,4 +1,0 @@
-Name			Latitute	Logitute	Population
-Arcadia 		34.109103	-118.017505	12345
-Azusa 			34.14266	-117.918977	23456
-Brentwood 		34.046602	-118.485553	74678
