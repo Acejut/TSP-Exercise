@@ -26,7 +26,7 @@ public class main
 	    System.out.println(arrCities.length);
 	    
 	    if (startEnd[0] == -1 || startEnd[1] == -1)
-	    	System.out.println("City not found or starting city is the same as end city.");
+	    	System.out.println("City not found.");
 	    else
 	    {
 	    	long startTime, endTime;
@@ -64,7 +64,7 @@ public class main
 			}
 			firstScan.close();
 			
-			arr = new CityNode[i];
+			arr = new CityNode[i+1];
 			i = 0;
 			
 			Scanner scan = new Scanner(towns);
@@ -92,20 +92,39 @@ public class main
 	static int[] cityGrab(CityNode[] arrCities)
 	{
 		Scanner userIn = new Scanner(System.in);
-		String startCity, endCity;
-		int[] startEnd = new int[]{-1, -1};
+		String startCity, endCity, response;
+		int[] startEnd = new int[]{-1, -1, -1};
 		
-		System.out.println("Please enter the name of the starting city:");
-		startCity = userIn.nextLine();
+		startCity = endCity = response = "";
 		
-		System.out.println("Please enter the name of the ending city:");
-		endCity = userIn.nextLine();
-		
-		for (int i = 0; i < arrCities.length; i++)
+		System.out.println("Start and end in same city? (y/n)");
+		response = userIn.nextLine();
+		if (response.equalsIgnoreCase("y"))
+		{
+			startEnd[2] = 0;
+			System.out.println("Please enter the name of the starting city:");
+			startCity = userIn.nextLine();
+			endCity = startCity;
+		}
+		else if (response.equalsIgnoreCase("n"))
+		{
+			startEnd[2] = 1;
+			
+			System.out.println("Please enter the name of the starting city:");
+			startCity = userIn.nextLine();
+			
+			System.out.println("Please enter the name of the ending city:");
+			endCity = userIn.nextLine();
+		}
+		else
+			System.out.println("Invalid input.");
+
+			
+		for (int i = 0; i < arrCities.length-1; i++)
 		{
 			if (startCity.equalsIgnoreCase(arrCities[i].name))
 				startEnd[0] = i;
-			else if (endCity.equalsIgnoreCase(arrCities[i].name))
+			if (endCity.equalsIgnoreCase(arrCities[i].name))
 				startEnd[1] = i;
 		}
 		userIn.close();
@@ -113,14 +132,38 @@ public class main
 	}
 	
 	
+	static CityNode[] arrayAdjust(CityNode[] arr, int[] startEnd, int arrLength)
+	{
+		CityNode[] newArr = Arrays.copyOf(arr, arrLength);
+		CityNode startTemp = new CityNode(arr[startEnd[0]]);
+		CityNode endTemp = new CityNode(arr[startEnd[1]]);
+		
+		newArr[startEnd[0]] = arr[0];
+		newArr[0] = startTemp;
+		newArr[arrLength-1] = endTemp;
+		
+		return newArr;
+	}
+	
 	static public Graph createGraph(Graph G, CityNode[] arrCities, int[] startEnd)
     {
 		int numNodes = arrCities.length;
+		int dupe = 0;
 		
 		G.Init(numNodes);
 		
 		for (int i = 0; i < numNodes; i++)
 			G.setMark(i, UNVISITED);
+		
+		G.setMark(G.getLastNode(), VISITED); //Last city must be marked as visited to avoid being visited prematurely.
+		
+		if (startEnd[2] == 1)
+		{
+			for (int i = 0; i < numNodes-1; i++)
+				if (arrCities[i].name.equalsIgnoreCase(arrCities[numNodes-1].name))
+					dupe = i;
+			G.setMark(dupe, VISITED);
+		}
 		
 		for(int i = 0; i < numNodes; i++)
 			for(int j = 0 ; j < numNodes; j++)
@@ -195,33 +238,12 @@ public class main
 	 * it will automatically visit the starting city first, and ending city last.
 	 */
 	
-	static CityNode[] arrayAdjust(CityNode[] arr, int[] startEnd, int n)
-	{
-		CityNode[] newArr = Arrays.copyOf(arr, arr.length);
-		CityNode temp0 = new CityNode(arr[startEnd[0]]);
-		CityNode temp1 = new CityNode(arr[startEnd[1]]);
-		
-		newArr[0] = temp0;
-		newArr[startEnd[0]] = newArr[n-1];
-		newArr[n-1] = temp1;
-		
-		/*arr[startEnd[0]] = arr[0];
-		arr[0] = temp0;
-		
-		arr[startEnd[1]] = arr[n-1];
-		arr[n-1] = temp1;*/
-		
-		return newArr;
-	}
+	
 	
 	static void graphTraverse(Graph G, CityNode[] arr) 
 	{
 		System.out.println("\n=-BEGIN TRAVELLING-=\n");
 		int v;
-		for (v = 0; v < G.n(); v++)
-			G.setMark(v, UNVISITED); // Initialize 
-		
-		G.setMark(G.getLastNode(), VISITED); //Last city must be marked as visited to avoid being visited prematurely.
 		
 		for (v = 0; v <G.n(); v++)
 			if (G.getMark(v) == UNVISITED)

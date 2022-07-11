@@ -52,6 +52,16 @@ public interface Graph {         // Graph class ADT
       @return The value of the mark */
   public int getMark(int v);
   
+  /** Set the name value for a vertex
+  @param v The vertex
+  @param val The value to set */
+public void setName(int v, String val);
+
+/** Get the name value for a vertex
+  @param v The vertex
+  @return The value of the mark */
+public String getName(int v);
+  
   /** Get the index of the city node whose weight is the least for that city and unvisited
    * @param i First vertex
    * @return The index of the least weighted city node*/

@@ -3,12 +3,13 @@
     by Clifford A. Shaffer
     Copyright 2008-2011 by Clifford A. Shaffer
 */
-
+import java.util.*;
 /** Graph: Adjacency matrix */
 class Graphm implements Graph {
   private double[][] matrix;                // The edge matrix
   private int numEdge;                   // Number of edges
   public int[] Mark;                     // The mark array
+  public String[] nodeName;
 
   public Graphm() {}                     // Constructors
   public Graphm(int n) {
@@ -19,6 +20,8 @@ class Graphm implements Graph {
     Mark = new int[n];
     matrix = new double[n][n];
     numEdge = 0;
+    nodeName = new String[n];
+    Arrays.fill(nodeName, 0, n, "");
   }
 
   public int n() { return Mark.length; } // # of vertices
@@ -64,6 +67,10 @@ class Graphm implements Graph {
   /** Set/Get the mark value for a vertex */
   public void setMark(int v, int val) { Mark[v] = val; }
   public int getMark(int v) { return Mark[v]; }
+  
+  /** Set/Get the name value for a vertex */
+  public void setName(int v, String val) { nodeName[v] = val; }
+  public String getName(int v) { return nodeName[v]; }
   
   /** @return the index of the city node whose weight is the least for that city and unvisited*/
   public int getLeast(int i)
