@@ -45,12 +45,8 @@ public class main
 	    	System.out.println("2) Greedy Algorithm");
 	    	choice = ui.nextInt();
 	    	
-	    	if (choice == 1)
-	    		graphTraverseAlpha(G, arrCities);
-	    	else if (choice == 2)
-	    		graphTraverseGreed(G, arrCities);
-	    	else
-	    		System.out.println("Invalid choice.");
+	    	graphTraverse(G, arrCities, choice);
+	    	
 	    	/*
 	    	endTime = System.nanoTime();
 	    	totalTime = (double) (endTime - startTime) / 1000000;
@@ -145,6 +141,12 @@ public class main
 		return startEnd;
 	}
 	
+	/*
+	 * arrayAdjust swaps the 0th index city with the chosen starting city,
+	 * then it places the ending city at the end of the array.
+	 * later, in createGraph, the duplicate first entry of the selected end city
+	 * is flagged "visited" so that it doesn't get visited at all.
+	 */
 	
 	static CityNode[] arrayAdjust(CityNode[] arr, int[] startEnd, int arrLength)
 	{
@@ -162,21 +164,23 @@ public class main
 	static public Graph createGraph(Graph G, CityNode[] arrCities, int[] startEnd)
     {
 		int numNodes = arrCities.length;
-		int dupe = 0;
+		int dupePos = 0;
 		
 		G.Init(numNodes);
 		
 		for (int i = 0; i < numNodes; i++)
 			G.setMark(i, UNVISITED);
 		
-		G.setMark(G.getLastNode(), VISITED); //Last city must be marked as visited to avoid being visited prematurely.
+		//Last city must be marked as visited to avoid being visited prematurely.
+		G.setMark(G.getLastNode(), VISITED); 
 		
+		//If the start and end city are the same, mark the first instance of the city "visited".
 		if (startEnd[2] == 1)
 		{
 			for (int i = 0; i < numNodes-1; i++)
 				if (arrCities[i].name.equalsIgnoreCase(arrCities[numNodes-1].name))
-					dupe = i;
-			G.setMark(dupe, VISITED);
+					dupePos = i;
+			G.setMark(dupePos, VISITED);
 		}
 		
 		for(int i = 0; i < numNodes; i++)
@@ -188,33 +192,29 @@ public class main
 		return G;
     }
 	
-	/*
-	 * arrayAdjust swaps the first node (alphabetical) with the user-selected starting city node.
-	 * It also swaps the last node (alphabetical) with the user-selected ending city node.
-	 * This is done so that when the DFS recursive method is called (which visits nodes in order of array index)
-	 * it will automatically visit the starting city first, and ending city last.
-	 */
-	
-	static void graphTraverseAlpha(Graph G, CityNode[] arr) 
+	static void graphTraverse(Graph G, CityNode[] arr, int choice) 
 	{
 		System.out.println("\n=-BEGIN TRAVELLING-=\n");
 		int v;
 		
 		for (v = 0; v <G.n(); v++)
 			if (G.getMark(v) == UNVISITED)
-				doTraverseAlpha(G, v, arr);
+			{
+				switch(choice)
+				{
+				case 1:
+					doTraverseAlpha(G, v, arr);
+					break;
+				case 2:
+					doTraverseGreed(G, v, arr);
+					break;
+				case 3:
+					//doTraversePerm(G, v, arr);
+					break;
+				}
+			}
 	}
 	
-	static void graphTraverseGreed(Graph G, CityNode[] arr) 
-	{
-		System.out.println("\n=-BEGIN TRAVELLING-=\n");
-		int v;
-		
-		for (v = 0; v <G.n(); v++)
-			if (G.getMark(v) == UNVISITED)
-				doTraverseGreed(G, v, arr);
-	}
-
 	static void doTraverseAlpha(Graph G, int v, CityNode[] arr) 
 	{DFSAlpha(G, v, arr);}
 	
