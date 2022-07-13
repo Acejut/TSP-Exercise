@@ -8,7 +8,9 @@ import java.util.*;
 public class main 
 {
 	static double total_weight = 0;
+	static double running_lowest = Double.MAX_VALUE;
 	static int[] startEnd;
+	static HashMap<Double, CityNode[]> cityDist = new HashMap<Double, CityNode[]>();
 	static final int UNVISITED = 0;
 	static final int VISITED = 1;
 	static final int LAST_VISIT = 2;
@@ -18,8 +20,7 @@ public class main
 	{
 		Graph G = new Graphm();
 		CityNode[] arrCities = null;
-		BufferedReader f = new BufferedReader(new InputStreamReader(new FileInputStream("src/LAGraph.gph")));
-		//int[] startEnd;
+		//BufferedReader f = new BufferedReader(new InputStreamReader(new FileInputStream("src/LAGraph.gph")));
 		
 		arrCities = createCityArr(arrCities);
 	    
@@ -44,6 +45,7 @@ public class main
 	    	System.out.println("Which algorithm would you like to use?");
 	    	System.out.println("1) Alphabetical (random)");
 	    	System.out.println("2) Greedy Algorithm");
+	    	System.out.println("3) Permutation Algorithm");
 	    	choice = ui.nextInt();
 	    	
 	    	startTime = System.nanoTime();
@@ -52,10 +54,17 @@ public class main
 	    	
 	    	endTime = System.nanoTime();
 	    	totalTime = (double) (endTime - startTime) / 1000000;
-	    	System.out.println(totalTime + "ms");
+	    	System.out.println("\n" + totalTime + "ms");
+	    	
+	    	System.out.printf("\nShortest path was %-5.2fkm, being", running_lowest);
+	    	
+	    	for (int i = 0; i < arrCities.length; i++)
+	    	{
+	    		System.out.printf(" %s ", cityDist.get(running_lowest)[i].name);
+	    		if (i != arrCities.length-1)
+	    			System.out.print("->");
+	    	}
 	    }
-	    
-	    System.out.printf("\nTotal sum of weight = %-5.2fkm", total_weight);
 	}
 	
 	static CityNode[] createCityArr(CityNode[] arr) 
@@ -221,7 +230,9 @@ public class main
 	static void permutateArray(int n, CityNode[] arrModded, CityNode[] og)
 	{
 		if (n == 1)
+		{
 			doTraversePerm(arrModded, og);
+		}
 		else 
 		{
 			for (int i = 0; i < n-1; i++) 
@@ -256,10 +267,23 @@ public class main
 		
 	
 	static void doTraverseAlpha(Graph G, int v, CityNode[] arr) 
-	{DFSAlpha(G, v, arr);}
+	{
+		total_weight = 0;
+		DFSAlpha(G, v, arr);
+		System.out.printf("\nTotal sum of weight = %-5.2fkm", total_weight);
+		
+		cityDist.put(total_weight, arr);
+		
+		if (total_weight < running_lowest)
+			running_lowest = total_weight;
+	}
 	
 	static void doTraverseGreed(Graph G, int v, CityNode[] arr) 
-	{DFSGreed(G, v, arr);}
+	{
+		total_weight = 0;
+		DFSGreed(G, v, arr);
+		System.out.printf("\nTotal sum of weight = %-5.2fkm", total_weight);
+	}
 	
 	/*
 	 * Improved greed algo first uses the G.getLeast Graphm function to visit the node for that city with the shortest distance.
@@ -277,9 +301,9 @@ public class main
 		{
 			if (G.getMark(x) == UNVISITED)
 			{
-					System.out.printf("Going from %-18s to %-18s was %-2.2fkm\n", arr[v].name, arr[x].name, G.weight(v, x));
-					DFSAlpha(G, x, arr);
-					total_weight += G.weight(v, x);
+				System.out.printf("Going from %-18s to %-18s was %-2.2fkm\n", arr[v].name, arr[x].name, G.weight(v, x));
+				total_weight += G.weight(v, x);
+				DFSAlpha(G, x, arr);
 		    }
 			else if (x == G.getLastNode() && G.getMark(G.getLastNode()) != LAST_VISIT)
 			{
