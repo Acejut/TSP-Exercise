@@ -8,16 +8,18 @@ import java.util.*;
 public class main 
 {
 	static double total_weight = 0;
+	static int[] startEnd;
 	static final int UNVISITED = 0;
 	static final int VISITED = 1;
 	static final int LAST_VISIT = 2;
+	
 	
 	public static void main(String[] args) throws IOException
 	{
 		Graph G = new Graphm();
 		CityNode[] arrCities = null;
 		BufferedReader f = new BufferedReader(new InputStreamReader(new FileInputStream("src/LAGraph.gph")));
-		int[] startEnd;
+		//int[] startEnd;
 		
 		arrCities = createCityArr(arrCities);
 	    
@@ -27,15 +29,14 @@ public class main
 	    	System.out.println("City not found.");
 	    else
 	    {
-	    	/*
+	    	
 	    	long startTime, endTime;
 	    	double totalTime;
 	    	
 	    	startTime = System.nanoTime();
-	    	*/
 	    	
-	    	arrCities = arrayAdjust(arrCities, startEnd, arrCities.length);
-	    	G = createGraph(G, arrCities, startEnd);
+	    	arrCities = arrayAdjust(arrCities, arrCities.length);
+	    	G = createGraph(G, arrCities);
 	    	
 	    	Scanner ui = new Scanner(System.in);
 			int choice = -1;
@@ -45,13 +46,13 @@ public class main
 	    	System.out.println("2) Greedy Algorithm");
 	    	choice = ui.nextInt();
 	    	
+	    	startTime = System.nanoTime();
 	    	graphTraverse(G, arrCities, choice);
 	    	
-	    	/*
+	    	
 	    	endTime = System.nanoTime();
 	    	totalTime = (double) (endTime - startTime) / 1000000;
 	    	System.out.println(totalTime + "ms");
-	    	*/
 	    }
 	    
 	    System.out.printf("\nTotal sum of weight = %-5.2fkm", total_weight);
@@ -148,7 +149,7 @@ public class main
 	 * is flagged "visited" so that it doesn't get visited at all.
 	 */
 	
-	static CityNode[] arrayAdjust(CityNode[] arr, int[] startEnd, int arrLength)
+	static CityNode[] arrayAdjust(CityNode[] arr, int arrLength)
 	{
 		CityNode[] newArr = Arrays.copyOf(arr, arrLength);
 		CityNode startTemp = new CityNode(arr[startEnd[0]]);
@@ -161,7 +162,7 @@ public class main
 		return newArr;
 	}
 	
-	static public Graph createGraph(Graph G, CityNode[] arrCities, int[] startEnd)
+	static public Graph createGraph(Graph G, CityNode[] arrCities)
     {
 		int numNodes = arrCities.length;
 		int dupePos = 0;
@@ -209,11 +210,50 @@ public class main
 					doTraverseGreed(G, v, arr);
 					break;
 				case 3:
-					//doTraversePerm(G, v, arr);
+					CityNode[] arrModded = Arrays.copyOfRange(arr, 1, arr.length-1);
+					permutateArray(arrModded.length, arrModded, arr);
 					break;
 				}
 			}
 	}
+	
+	
+	static void permutateArray(int n, CityNode[] arrModded, CityNode[] og)
+	{
+		if (n == 1)
+			doTraversePerm(arrModded, og);
+		else 
+		{
+			for (int i = 0; i < n-1; i++) 
+			{
+				permutateArray(n - 1, arrModded, og);
+				if (n % 2 == 0)
+					swap(arrModded, i, n-1);
+				else
+					swap(arrModded, 0, n-1);
+	        }
+			permutateArray(n - 1, arrModded, og);
+		}
+	}
+	
+	private static void swap(CityNode[] input, int a, int b) 
+	{
+		    CityNode tmp = input[a];
+		    input[a] = input[b];
+		    input[b] = tmp;
+	}
+	
+	private static void doTraversePerm(CityNode[] input, CityNode[] og) 
+	{
+		Graph G = new Graphm();
+		
+		for (int i = 1; i < og.length-1; i++)
+			og[i] = input[i-1];
+		
+		G = createGraph(G, og);
+		graphTraverse(G, og, 1);
+	}
+		
 	
 	static void doTraverseAlpha(Graph G, int v, CityNode[] arr) 
 	{DFSAlpha(G, v, arr);}
@@ -222,7 +262,7 @@ public class main
 	{DFSGreed(G, v, arr);}
 	
 	/*
-	 * Improved loop first uses the G.getLeast Graphm function to visit the node for that city with the shortest distance.
+	 * Improved greed algo first uses the G.getLeast Graphm function to visit the node for that city with the shortest distance.
 	 * If that node has already been visited by a different city, find the next least weighted city.
 	 * For the very last city, a special identifier was made (LAST_VISIT) that is checked so that the last city...
 	 * is not visited prematurely.
