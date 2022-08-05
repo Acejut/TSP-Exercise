@@ -3,7 +3,7 @@ import java.util.*;
 
 //Justin Ruiz
 
-/* TODO: Implement permutation algorithm */
+/* TODO: Integrate Q-Learning somehow */
 
 public class main 
 {
@@ -20,7 +20,6 @@ public class main
 	{
 		Graph G = new Graphm();
 		CityNode[] arrCities = null;
-		//BufferedReader f = new BufferedReader(new InputStreamReader(new FileInputStream("src/LAGraph.gph")));
 		
 		arrCities = createCityArr(arrCities);
 	    
@@ -30,11 +29,8 @@ public class main
 	    	System.out.println("City not found.");
 	    else
 	    {
-	    	
 	    	long startTime, endTime;
 	    	double totalTime;
-	    	
-	    	startTime = System.nanoTime();
 	    	
 	    	arrCities = arrayAdjust(arrCities, arrCities.length);
 	    	G = createGraph(G, arrCities);
@@ -54,15 +50,18 @@ public class main
 	    	
 	    	endTime = System.nanoTime();
 	    	totalTime = (double) (endTime - startTime) / 1000000;
-	    	System.out.println("\n" + totalTime + "ms");
+	    	System.out.println("\nAlgorithm took " + totalTime + "ms to process.");
 	    	
-	    	System.out.printf("\nShortest path was %-5.2fkm, being", running_lowest);
-	    	
-	    	for (int i = 0; i < arrCities.length; i++)
+	    	if (choice == 3)
 	    	{
-	    		System.out.printf(" %s ", cityDist.get(running_lowest)[i].name);
-	    		if (i != arrCities.length-1)
-	    			System.out.print("->");
+		    	System.out.printf("\nShortest path was %-5.2fkm, being", running_lowest);
+		    	
+		    	for (int i = 0; i < arrCities.length; i++)
+		    	{
+		    		System.out.printf(" %s ", cityDist.get(running_lowest)[i].name);
+		    		if (i != arrCities.length-1)
+		    			System.out.print("->");
+		    	}
 	    	}
 	    }
 	}
@@ -202,6 +201,7 @@ public class main
 		return G;
     }
 	
+	//Determine which algorithm to run
 	static void graphTraverse(Graph G, CityNode[] arr, int choice) 
 	{
 		System.out.println("\n=-BEGIN TRAVELLING-=\n");
@@ -226,7 +226,7 @@ public class main
 			}
 	}
 	
-	
+	//find all permutations of the original array and create a map for each one
 	static void permutateArray(int n, CityNode[] arrModded, CityNode[] og)
 	{
 		if (n == 1)
@@ -247,6 +247,7 @@ public class main
 		}
 	}
 	
+	//swap function for the permuteArray function
 	private static void swap(CityNode[] input, int a, int b) 
 	{
 		    CityNode tmp = input[a];
@@ -254,6 +255,7 @@ public class main
 		    input[b] = tmp;
 	}
 	
+	//create a map for the permutated array
 	private static void doTraversePerm(CityNode[] input, CityNode[] og) 
 	{
 		Graph G = new Graphm();
@@ -283,13 +285,16 @@ public class main
 		total_weight = 0;
 		DFSGreed(G, v, arr);
 		System.out.printf("\nTotal sum of weight = %-5.2fkm", total_weight);
+		
+		cityDist.put(total_weight, arr);
+		
+		if (total_weight < running_lowest)
+			running_lowest = total_weight;
 	}
-	
 	/*
-	 * Improved greed algo first uses the G.getLeast Graphm function to visit the node for that city with the shortest distance.
-	 * If that node has already been visited by a different city, find the next least weighted city.
-	 * For the very last city, a special identifier was made (LAST_VISIT) that is checked so that the last city...
-	 * is not visited prematurely.
+	 * Random algo visits each node by array order. In the base case array, this is alphabetical
+	 * This algo is also used for the permutation algo, as it serves the same function
+	 * once a new permutated array is fed into the params.
 	 */
 	
 	static void DFSAlpha(Graph G, int v, CityNode[] arr) 
@@ -315,6 +320,13 @@ public class main
 		}
 	}
 	
+	/*
+	 * Improved greed algo first uses the G.getLeast Graphm function to visit the node for that city with the shortest distance.
+	 * If that node has already been visited by a different city, find the next least weighted city.
+	 * For the very last city, a special identifier was made (LAST_VISIT) that is checked so that the last city...
+	 * is not visited prematurely.
+	 */
+	
 	static void DFSGreed(Graph G, int v, CityNode[] arr) 
 	{
 		G.setMark(v, VISITED);
@@ -326,8 +338,8 @@ public class main
 			if (G.getMark(index) == UNVISITED)
 			{
 				System.out.printf("Going from %-18s to %-18s was %-2.2fkm\n", arr[v].name, arr[index].name, G.weight(v, index));
-				DFSGreed(G, index, arr);
 				total_weight += G.weight(v, index);
+				DFSGreed(G, index, arr);
 			}
 			else if (G.getMark(x) == UNVISITED)
 			{
