@@ -3,48 +3,67 @@ import java.util.*;
 
 //Justin Ruiz
 
-/* TODO: Implement permutation algorithm */
+/* TODO: Integrate Q-Learning somehow */
 
 public class main 
 {
 	static double total_weight = 0;
+	static double running_lowest = Double.MAX_VALUE;
+	static int[] startEnd;
+	static HashMap<Double, CityNode[]> cityDist = new HashMap<Double, CityNode[]>();
 	static final int UNVISITED = 0;
 	static final int VISITED = 1;
 	static final int LAST_VISIT = 2;
+	
 	
 	public static void main(String[] args) throws IOException
 	{
 		Graph G = new Graphm();
 		CityNode[] arrCities = null;
-		BufferedReader f = new BufferedReader(new InputStreamReader(new FileInputStream("src/LAGraph.gph")));
-		int[] startEnd;
 		
 		arrCities = createCityArr(arrCities);
 	    
-	    startEnd = cityGrab(arrCities);
+		startEnd = cityGrab(arrCities);
 	    
-	    System.out.println(arrCities.length);
-	    
-	    if (startEnd[0] == -1 || startEnd[1] == -1)
+		if (startEnd[0] == -1 || startEnd[1] == -1)
 	    	System.out.println("City not found.");
 	    else
 	    {
 	    	long startTime, endTime;
 	    	double totalTime;
 	    	
-	    	startTime = System.nanoTime();
+	    	arrCities = arrayAdjust(arrCities, arrCities.length);
+	    	G = createGraph(G, arrCities);
 	    	
-	    	//createGraph(f, G, arrCities, startEnd);
-	    	arrCities = arrayAdjust(arrCities, startEnd, arrCities.length);
-	    	G = createGraph(G, arrCities, startEnd);
-	    	graphTraverse(G, arrCities);
+	    	Scanner ui = new Scanner(System.in);
+			int choice = -1;
+	    	
+	    	System.out.println("Which algorithm would you like to use?");
+	    	System.out.println("1) Alphabetical (random)");
+	    	System.out.println("2) Greedy Algorithm");
+	    	System.out.println("3) Permutation Algorithm");
+	    	choice = ui.nextInt();
+	    	
+	    	startTime = System.nanoTime();
+	    	graphTraverse(G, arrCities, choice);
+	    	
 	    	
 	    	endTime = System.nanoTime();
 	    	totalTime = (double) (endTime - startTime) / 1000000;
-	    	System.out.println(totalTime + "ms");
+	    	System.out.println("\nAlgorithm took " + totalTime + "ms to process.");
+	    	
+	    	if (choice == 3)
+	    	{
+		    	System.out.printf("\nShortest path was %-5.2fkm, being", running_lowest);
+		    	
+		    	for (int i = 0; i < arrCities.length; i++)
+		    	{
+		    		System.out.printf(" %s ", cityDist.get(running_lowest)[i].name);
+		    		if (i != arrCities.length-1)
+		    			System.out.print("->");
+		    	}
+	    	}
 	    }
-	    
-	    System.out.printf("\nTotal sum of weight = %-5.2fkm", total_weight);
 	}
 	
 	static CityNode[] createCityArr(CityNode[] arr) 
@@ -127,12 +146,18 @@ public class main
 			if (endCity.equalsIgnoreCase(arrCities[i].name))
 				startEnd[1] = i;
 		}
-		userIn.close();
+		//userIn.close();
 		return startEnd;
 	}
 	
+	/*
+	 * arrayAdjust swaps the 0th index city with the chosen starting city,
+	 * then it places the ending city at the end of the array.
+	 * later, in createGraph, the duplicate first entry of the selected end city
+	 * is flagged "visited" so that it doesn't get visited at all.
+	 */
 	
-	static CityNode[] arrayAdjust(CityNode[] arr, int[] startEnd, int arrLength)
+	static CityNode[] arrayAdjust(CityNode[] arr, int arrLength)
 	{
 		CityNode[] newArr = Arrays.copyOf(arr, arrLength);
 		CityNode startTemp = new CityNode(arr[startEnd[0]]);
@@ -145,24 +170,26 @@ public class main
 		return newArr;
 	}
 	
-	static public Graph createGraph(Graph G, CityNode[] arrCities, int[] startEnd)
+	static public Graph createGraph(Graph G, CityNode[] arrCities)
     {
 		int numNodes = arrCities.length;
-		int dupe = 0;
+		int dupePos = 0;
 		
 		G.Init(numNodes);
 		
 		for (int i = 0; i < numNodes; i++)
 			G.setMark(i, UNVISITED);
 		
-		G.setMark(G.getLastNode(), VISITED); //Last city must be marked as visited to avoid being visited prematurely.
+		//Last city must be marked as visited to avoid being visited prematurely.
+		G.setMark(G.getLastNode(), VISITED); 
 		
+		//If the start and end city are the same, mark the first instance of the city "visited".
 		if (startEnd[2] == 1)
 		{
 			for (int i = 0; i < numNodes-1; i++)
 				if (arrCities[i].name.equalsIgnoreCase(arrCities[numNodes-1].name))
-					dupe = i;
-			G.setMark(dupe, VISITED);
+					dupePos = i;
+			G.setMark(dupePos, VISITED);
 		}
 		
 		for(int i = 0; i < numNodes; i++)
@@ -170,117 +197,154 @@ public class main
 			{
 				double weight = CityNode.getDistance(arrCities[i], arrCities[j]);
 				G.setEdge(i, j, weight);
-				//System.out.printf("The distance from %-18s and %-18s is: %2fkm\n", 
-						//arrCities[i].name, arrCities[j].name, weight);
 			}
 		return G;
     }
 	
-	/*
-	static Graph createGraph(BufferedReader file, Graph G, CityNode[] arrCities, int[] startEnd) throws IOException 
-	{
-		String line = null;
-		StringTokenizer token;
-		boolean undirected = false;
-		int i, v1, v2;
-		double weight;
-		
-		line = file.readLine();
-		while(line.charAt(0) == '#')
-			line = file.readLine();
-		token = new StringTokenizer(line);
-		
-		int n = Integer.parseInt(token.nextToken());
-		//int n = arrCities.length;
-		arrCities = arrayAdjust(arrCities, startEnd, n);
-		G.Init(n);
-		
-		for (i=0; i<n; i++)
-			G.setMark(i, UNVISITED);
-		
-		line = file.readLine();
-		
-		if (line.charAt(0) == 'U')
-			undirected = true;
-		else if (line.charAt(0) == 'D')
-			undirected = false;
-		
-		//else assert false : "Bad graph type: " + line;
-		
-		// Read in edges
-		System.out.println("\n=-DISTANCE PRINTOUTS-=\n");
-		
-		while((line = file.readLine()) != null) 
-		{
-			token = new StringTokenizer(line);
-			v1 = Integer.parseInt(token.nextToken());
-			v2 = Integer.parseInt(token.nextToken());
-			if (token.hasMoreTokens())
-			{
-				weight = CityNode.getDistance(arrCities[v1], arrCities[v2]);
-				System.out.printf("The distance from %-18s and %-18s is: %2fkm\n", 
-						arrCities[v1].name, arrCities[v2].name, weight);
-			}
-			else // No weight given -- set at 1
-				weight = 1;
-			G.setEdge(v1, v2, weight);
-			if (undirected) // Put in edge in other direction
-				G.setEdge(v2, v1, weight);
-		}
-		return G;
-	}
-	*/
-	
-	/*
-	 * arrayAdjust swaps the first node (alphabetical) with the user-selected starting city node.
-	 * It also swaps the last node (alphabetical) with the user-selected ending city node.
-	 * This is done so that when the DFS recursive method is called (which visits nodes in order of array index)
-	 * it will automatically visit the starting city first, and ending city last.
-	 */
-	
-	
-	
-	static void graphTraverse(Graph G, CityNode[] arr) 
+	//Determine which algorithm to run
+	static void graphTraverse(Graph G, CityNode[] arr, int choice) 
 	{
 		System.out.println("\n=-BEGIN TRAVELLING-=\n");
 		int v;
 		
 		for (v = 0; v <G.n(); v++)
 			if (G.getMark(v) == UNVISITED)
-				doTraverse(G, v, arr);
+			{
+				switch(choice)
+				{
+				case 1:
+					doTraverseAlpha(G, v, arr);
+					break;
+				case 2:
+					doTraverseGreed(G, v, arr);
+					break;
+				case 3:
+					CityNode[] arrModded = Arrays.copyOfRange(arr, 1, arr.length-1);
+					permutateArray(arrModded.length, arrModded, arr);
+					break;
+				}
+			}
 	}
+	
+	//find all permutations of the original array and create a map for each one
+	static void permutateArray(int n, CityNode[] arrModded, CityNode[] og)
+	{
+		if (n == 1)
+		{
+			doTraversePerm(arrModded, og);
+		}
+		else 
+		{
+			for (int i = 0; i < n-1; i++) 
+			{
+				permutateArray(n - 1, arrModded, og);
+				if (n % 2 == 0)
+					swap(arrModded, i, n-1);
+				else
+					swap(arrModded, 0, n-1);
+	        }
+			permutateArray(n - 1, arrModded, og);
+		}
+	}
+	
+	//swap function for the permuteArray function
+	private static void swap(CityNode[] input, int a, int b) 
+	{
+		    CityNode tmp = input[a];
+		    input[a] = input[b];
+		    input[b] = tmp;
+	}
+	
+	//create a map for the permutated array
+	private static void doTraversePerm(CityNode[] input, CityNode[] og) 
+	{
+		Graph G = new Graphm();
+		
+		for (int i = 1; i < og.length-1; i++)
+			og[i] = input[i-1];
+		
+		G = createGraph(G, og);
+		graphTraverse(G, og, 1);
+	}
+		
+	
+	static void doTraverseAlpha(Graph G, int v, CityNode[] arr) 
+	{
+		total_weight = 0;
+		DFSAlpha(G, v, arr);
+		System.out.printf("\nTotal sum of weight = %-5.2fkm", total_weight);
+		
+		cityDist.put(total_weight, arr);
+		
+		if (total_weight < running_lowest)
+			running_lowest = total_weight;
+	}
+	
+	static void doTraverseGreed(Graph G, int v, CityNode[] arr) 
+	{
+		total_weight = 0;
+		DFSGreed(G, v, arr);
+		System.out.printf("\nTotal sum of weight = %-5.2fkm", total_weight);
+		
+		cityDist.put(total_weight, arr);
+		
+		if (total_weight < running_lowest)
+			running_lowest = total_weight;
+	}
+	/*
+	 * Random algo visits each node by array order. In the base case array, this is alphabetical
+	 * This algo is also used for the permutation algo, as it serves the same function
+	 * once a new permutated array is fed into the params.
+	 */
+	
+	static void DFSAlpha(Graph G, int v, CityNode[] arr) 
+	{
+		G.setMark(v, VISITED);
+		int x = G.first(v);
 
-	static void doTraverse(Graph G, int v, CityNode[] arr) 
-	{DFS(G, v, arr);}
+		while (x < G.n())
+		{
+			if (G.getMark(x) == UNVISITED)
+			{
+				System.out.printf("Going from %-18s to %-18s was %-2.2fkm\n", arr[v].name, arr[x].name, G.weight(v, x));
+				total_weight += G.weight(v, x);
+				DFSAlpha(G, x, arr);
+		    }
+			else if (x == G.getLastNode() && G.getMark(G.getLastNode()) != LAST_VISIT)
+			{
+				G.setMark(G.getLastNode(), LAST_VISIT);
+				System.out.printf("Going from %-18s to %-18s was %-2.2fkm\n", arr[v].name, arr[x].name, G.weight(v, x));
+				total_weight += G.weight(v, x);
+			}
+			x = G.next(v, x);
+		}
+	}
 	
 	/*
-	 * Improved loop first uses the G.getLeast Graphm function to visit the node for that city with the shortest distance.
+	 * Improved greed algo first uses the G.getLeast Graphm function to visit the node for that city with the shortest distance.
 	 * If that node has already been visited by a different city, find the next least weighted city.
 	 * For the very last city, a special identifier was made (LAST_VISIT) that is checked so that the last city...
 	 * is not visited prematurely.
 	 */
 	
-	static void DFS(Graph G, int v, CityNode[] arr) 
+	static void DFSGreed(Graph G, int v, CityNode[] arr) 
 	{
 		G.setMark(v, VISITED);
 		int index = G.getLeast(v);
 		int x = G.first(v);
-		
-		
-		//GREEDY TRAVERSAL ALGORITHM
 		
 		while (x < G.n())
 		{
 			if (G.getMark(index) == UNVISITED)
 			{
 				System.out.printf("Going from %-18s to %-18s was %-2.2fkm\n", arr[v].name, arr[index].name, G.weight(v, index));
-				DFS(G, index, arr);
 				total_weight += G.weight(v, index);
+				DFSGreed(G, index, arr);
 			}
 			else if (G.getMark(x) == UNVISITED)
 			{
 				System.out.printf("Going from %-18s to %-18s was %-2.2fkm\n", arr[v].name, arr[x].name, G.weight(v, x));
-				DFS(G, x, arr);
+				DFSGreed(G, x, arr);
 				total_weight += G.weight(v, x);
 			}
 			else if (x == G.getLastNode() && G.getMark(G.getLastNode()) != LAST_VISIT)
@@ -292,17 +356,5 @@ public class main
 			
 			x = G.next(v, x);
 		}
-		
-		
-		/* ALPHABETICAL ORDER TRAVERSAL (RANDOM)
-
-		for (int w = G.first(v); w < G.n() ; w = G.next(v, w))
-			if (G.getMark(w) == UNVISITED)
-			{
-					System.out.printf("Going from %-18s to %-18s was %-2.2fkm\n", arr[v].name, arr[w].name, G.weight(v, w));
-					DFS(G, w, arr);
-					total_weight += G.weight(v, w);
-		    }
-		*/
 	}
 }
