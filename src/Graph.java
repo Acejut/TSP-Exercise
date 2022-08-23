@@ -3,71 +3,94 @@
     by Clifford A. Shaffer
     Copyright 2008-2011 by Clifford A. Shaffer
 */
+import java.util.*;
+/** Graph: Adjacency matrix */
+class Graph {
+  private double[][] matrix;                // The edge matrix
+  private int numEdge;                   // Number of edges
+  public int[] Mark;                     // The mark array
+  public String[] nodeName;
 
-/** Graph ADT */
-public interface Graph {         // Graph class ADT
+  public Graph() {}                     // Constructors
+  public Graph(int n) {
+    Init(n);
+  }
 
-  /** Initialize the graph
-      @param n The number of vertices */
-  public void Init(int n);
+  public void Init(int n) {
+    Mark = new int[n];
+    matrix = new double[n][n];
+    numEdge = 0;
+    nodeName = new String[n];
+    Arrays.fill(nodeName, 0, n, "");
+  }
 
-  /** @return The number of vertices */
-  public int n();
-
-  /** @return The current number of edges */
-  public int e();
+  public int n() { return Mark.length; } // # of vertices
+  public int e() { return numEdge; }     // # of edges
 
   /** @return v's first neighbor */
-  public int first(int v);
+  public int first(int v) {
+    for (int i=0; i<Mark.length; i++)
+      if (matrix[v][i] != 0) return i;
+    return Mark.length;  // No edge for this vertex
+  }
 
  /** @return v's next neighbor after w */
-  public int next(int v, int w);
+  public int next(int v, int w) {
+    for (int i=w+1; i<Mark.length; i++)
+      if (matrix[v][i] != 0)
+        return i;
+    return Mark.length;  // No next edge;
+  }
 
-  /** Set the weight for an edge
-      @param i,j The vertices
-      @param wght Edge weight */
-  public void setEdge(int i, int j, double wght);
+  /** Set the weight for an edge */
+  public void setEdge(int i, int j, double wt) {
+    assert wt!=0 : "Cannot set weight to 0";
+    if (matrix[i][j] == 0) numEdge++;
+    matrix[i][j] = wt;
+  }
 
-  /** Delete an edge
-      @param i,j The vertices */
-  public void delEdge(int i, int j);
+  /** Delete an edge */
+  public void delEdge(int i, int j) { // Delete edge (i, j)
+    if (matrix[i][j] != 0) numEdge--;
+    matrix[i][j] = 0;
+  }
 
-  /** Determine if an edge is in the graph
-      @param i,j The vertices
-      @return true if edge i,j has non-zero weight */
-  public boolean isEdge(int i, int j);
-
-
-  /** @return The weight of edge i,j, or zero
-      @param i,j The vertices */
-  public double weight(int i, int j);
-
-  /** Set the mark value for a vertex
-      @param v The vertex
-      @param val The value to set */
-  public void setMark(int v, int val);
-
-  /** Get the mark value for a vertex
-      @param v The vertex
-      @return The value of the mark */
-  public int getMark(int v);
+  /** Determine if an edge is in the graph */
+  public boolean isEdge(int i, int j)
+    { return matrix[i][j] != 0; }
   
-  /** Set the name value for a vertex
-  @param v The vertex
-  @param val The value to set */
-public void setName(int v, String val);
+  /** @return an edge's weight */
+  public double weight(int i, int j) {
+    return matrix[i][j];
+  }
 
-/** Get the name value for a vertex
-  @param v The vertex
-  @return The value of the mark */
-public String getName(int v);
+  /** Set/Get the mark value for a vertex */
+  public void setMark(int v, int val) { Mark[v] = val; }
+  public int getMark(int v) { return Mark[v]; }
   
-  /** Get the index of the city node whose weight is the least for that city and unvisited
-   * @param i First vertex
-   * @return The index of the least weighted city node*/
-  public int getLeast(int i);
+  /** Set/Get the name value for a vertex /
+  public void setName(int v, String val) { nodeName[v] = val; }
+  public String getName(int v) { return nodeName[v]; }
+  */
   
-  /** Get the index of the last node
-   * @return The index of the last node*/
-  public int getLastNode();
+  /** @return the index of the city node whose weight is the least for that city and unvisited*/
+  public int getLeast(int i)
+  {
+	  double min = Double.MAX_VALUE;
+	  int index = 0;
+	  for (int j = 0; j < Mark.length; j++)
+	  {
+		  if ((matrix[i][j] < min) && (matrix[i][j] != 0) && (getMark(j) == 0))
+		  {
+			  min = matrix[i][j];
+			  index = j;
+		  }
+	  }
+	  return index;
+  }
+  
+  /** @return last node of the graph */
+  public int getLastNode()
+  {return (this.n()-1);}
+  
 }
