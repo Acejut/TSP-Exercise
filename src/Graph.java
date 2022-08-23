@@ -6,7 +6,7 @@
 import java.util.*;
 /** Graph: Adjacency matrix */
 class Graph {
-  private double[][] matrix;                // The edge matrix
+  public double[][] matrix;                // The edge matrix
   private int numEdge;                   // Number of edges
   public int[] Mark;                     // The mark array
   public String[] nodeName;
