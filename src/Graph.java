@@ -68,10 +68,9 @@ class Graph {
   public void setMark(int v, int val) { Mark[v] = val; }
   public int getMark(int v) { return Mark[v]; }
   
-  /** Set/Get the name value for a vertex /
+  /** Set/Get the name value for a vertex */
   public void setName(int v, String val) { nodeName[v] = val; }
   public String getName(int v) { return nodeName[v]; }
-  */
   
   /** @return the index of the city node whose weight is the least for that city and unvisited*/
   public int getLeast(int i)

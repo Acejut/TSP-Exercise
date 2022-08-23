@@ -7,8 +7,10 @@ public class main
 {
 	static double total_weight = 0;
 	static double running_lowest = Double.MAX_VALUE;
+	static double homeDist = 0;
 	static Graph G;
 	static LinkedList<CityNode> arrCities;
+	static LinkedList<String> salesmanPath = new LinkedList<>();
 	
 	static final int UNVISITED = 0;
 	static final int VISITED = 1;
@@ -18,6 +20,8 @@ public class main
 		initList();
 		initGraph();
 		graphTraverse();
+		returnHome();
+		resultPrint();
 	}
 
 	static void initList() 
@@ -70,11 +74,15 @@ public class main
 	{
 		G = new Graph();
 		int size = arrCities.size();
-		
+		int s = 0;
 		G.Init(size);
-		
-		for (int i : G.Mark)
-			G.setMark(i, UNVISITED);
+
+		for (int k : G.Mark)
+		{
+			G.setMark(s, UNVISITED);
+			G.setName(s, arrCities.get(s).name);
+			s++;
+		}
 		
 		for(int i = 0; i < size; i++)
 			for(int j = 0 ; j < size; j++)
@@ -98,33 +106,13 @@ public class main
 				default:
 					System.out.println("INVALID CHOICE");
 				case 1:
-					doTraverseAlpha(v);
+					DFSAlpha(v);
 					break;
 				case 2:
-					doTraverseGreed(v);
+					DFSGreed(v);
 					break;
 				}
 			}
-	}
-	
-	static void doTraverseAlpha(int v) 
-	{
-		total_weight = 0;
-		DFSAlpha(v);
-		System.out.printf("\nTotal sum of weight = %-5.2fkm", total_weight);
-		
-		if (total_weight < running_lowest)
-			running_lowest = total_weight;
-	}
-	
-	static void doTraverseGreed(int v) 
-	{
-		total_weight = 0;
-		DFSGreed(v);
-		System.out.printf("\nTotal sum of weight = %-5.2fkm", total_weight);
-		
-		if (total_weight < running_lowest)
-			running_lowest = total_weight;
 	}
 	
 	static void DFSAlpha(int v) 
@@ -136,13 +124,15 @@ public class main
 		{
 			if (G.getMark(x) == UNVISITED)
 			{
-				System.out.printf("Going from %-18s to %-18s was %-2.2fkm\n", arrCities.get(v).name, arrCities.get(x).name, G.weight(v, x));
+				System.out.printf("Going from %-18s to %-18s was %-2.2fkm\n", G.getName(v), G.getName(x), G.weight(v, x));
 				total_weight += G.weight(v, x);
 				DFSAlpha(x);
 		    }
 			
 			x = G.next(v, x);
 		}
+		
+		salesmanPath.addLast(G.getName(v));
 	}
 	
 	static void DFSGreed(int v) 
@@ -155,19 +145,45 @@ public class main
 		{
 			if (G.getMark(index) == UNVISITED)
 			{
-				System.out.printf("Going from %-18s to %-18s was %-2.2fkm\n", arrCities.get(v).name, arrCities.get(index).name, G.weight(v, index));
+				System.out.printf("Going from %-18s to %-18s was %-2.2fkm\n", G.getName(v), G.getName(index), G.weight(v, index));
 				total_weight += G.weight(v, index);
 				DFSGreed(index);
-			}
-			else if (G.getMark(x) == UNVISITED)
-			{
-				System.out.printf("Going from %-18s to %-18s was %-2.2fkm\n", arrCities.get(v).name, arrCities.get(x).name, G.weight(v, x));
-				total_weight += G.weight(v, x);
-				DFSGreed(x);
 			}
 			
 			x = G.next(v, x);
 		}
+		
+		salesmanPath.addLast(G.getName(v));
+	}
+	
+	static void returnHome()
+	{
+		String lastCityName = salesmanPath.getFirst();
+		String homeCityName = salesmanPath.getLast();
+		int lastCityIndex, homeCityIndex;
+		lastCityIndex = homeCityIndex = 0;
+		
+		for (int i = 0; i < arrCities.size(); i++)
+		{
+			if (arrCities.get(i).name.equals(lastCityName))
+				lastCityIndex = i;
+			else if (arrCities.get(i).name.equals(homeCityName))
+				homeCityIndex = i;
+		}
+		
+		homeDist = CityNode.getDistance(arrCities.get(lastCityIndex), arrCities.get(homeCityIndex));
+		total_weight += homeDist;
+	}
+	
+	static void resultPrint()
+	{
+		Iterator<String> x = salesmanPath.descendingIterator();
+		
+		System.out.println();
+		while (x.hasNext())
+			System.out.printf("%s -> ", x.next());
+		System.out.print(arrCities.getFirst().name);
+		System.out.printf("\nTotal distance traveled = %-5.2fkm", total_weight);
 	}
 
 }
